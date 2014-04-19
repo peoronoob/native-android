@@ -2,7 +2,9 @@ LOCAL_PATH:= $(call my-dir)
 
 LOCAL_LDFLAGS := -Wl,-Map,tealeaf.map
 
--include ${LOCAL_PATH}/profiler/android-ndk-profiler.mk
+ifneq ($(TARGET_ARCH_ABI),x86)
+	-include ${LOCAL_PATH}/profiler/android-ndk-profiler.mk
+endif
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := curl-prebuilt
@@ -156,6 +158,8 @@ LOCAL_CFLAGS += -Wall -Werror -Wno-psabi -Wno-unused-function -Wno-unused-but-se
 
 ifeq ($(APP_ABI),armeabi-v7a)
 	LOCAL_CFLAGS += -march=armv7-a -mfloat-abi=softfp 
+else ifeq ($(APP_ABI),x86)
+	LOCAL_CFLAGS += -march=i686 -mtune=atom -mstackrealign -msse3 -mfpmath=sse -m32
 endif
 
 LOCAL_STATIC_LIBRARIES += libv8a
@@ -196,7 +200,12 @@ ifeq (${GPROF}, 1)
 LOCAL_CFLAGS += -DPROFILE -pg -fno-omit-frame-pointer -fno-function-sections
 LOCAL_STATIC_LIBRARIES += andprof
 endif
-include $(BUILD_SHARED_LIBRARY)
+
+ifeq ($(APP_ABI),x86)
+	include $(BUILD_STATIC_LIBRARY)
+else
+	include $(BUILD_STATIC_LIBRARY)
+endif
 
 $(call import-module,android/cpufeatures)
 
